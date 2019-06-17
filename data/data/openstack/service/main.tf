@@ -105,7 +105,6 @@ listen ${var.cluster_id}-api-masters
     balance roundrobin
     server bootstrap-22623 ${var.bootstrap_ip} check port 22623
     server bootstrap-6443 ${var.bootstrap_ip} check port 6443
-    ${replace(join("\n    ", formatlist("server master-%s %s check port 6443", var.master_port_names, var.master_ips)), "master-port-", "")}
 EOF
     update_cfg_and_restart
     exit 0
@@ -155,28 +154,13 @@ data "ignition_file" "corefile" {
     errors
     reload 10s
 
-${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster_domain} api.${var.cluster_domain} {\n    }\n"}
-
     hosts {
         ${replace(join("\n", formatlist("%s %s", var.master_ips, var.master_port_names)), "port-", "")}
         fallthrough
     }
 
 
-    file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_domain} {
-    }
-
-    file /etc/coredns/db.${var.cluster_domain} bootstrap.${var.cluster_domain} {
-        upstream /etc/resolv.conf
-    }
-
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
-
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
-
-
-    forward . /etc/resolv.conf {
-    }
+    forward . /etc/resolv.conf
 }
 
 ${var.cluster_domain} {
@@ -184,9 +168,8 @@ ${var.cluster_domain} {
     errors
     reload 10s
 
-    file /etc/coredns/db.${var.cluster_domain} {
-        upstream /etc/resolv.conf
-    }
+    file /etc/coredns/db.${var.cluster_domain}
+    forward . /etc/resolv.conf
 }
 
 EOF
