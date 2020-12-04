@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
@@ -28,6 +29,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 
 	// validate custom cluster os image
 	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
+
+	// validate image properties
+	allErrs = append(allErrs, validateImageProperties(p, ci, fldPath)...)
 
 	return allErrs
 }
@@ -113,6 +117,30 @@ func validateClusterOSImage(p *openstack.Platform, ci *CloudInfo, fldPath *field
 	// Image should have "active" status
 	if ci.OSImage.Status != images.ImageStatusActive {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, fmt.Sprintf("OS image must be active but its status is '%s'", ci.OSImage.Status)))
+	}
+
+	return allErrs
+}
+
+// validateBaseImageProperties rejects unsupported glance image properties
+func validateImageProperties(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	// Skip validation if it's pointing to an image in glance
+	if p.ClusterOSImage != "" {
+		if _, err := url.ParseRequestURI(p.ClusterOSImage); err != nil {
+			return
+		}
+	}
+
+	validProperties := map[string]sets.String{
+		"hw_qemu_guest_agent": sets.NewString("yes", "no", "true", "false"),
+		"hw_disk_bus":         sets.NewString("scsi", "virtio"),
+		"hw_scsi_model":       sets.NewString("virtio-scsi"),
+	}
+
+	for property, value := range p.ClusterOSImageProperties {
+		if !validProperties[property].Has(value) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImageProperties"), p.ClusterOSImageProperties, fmt.Sprintf("'%s: %s' is not a supported image property", property, value)))
+		}
 	}
 
 	return allErrs

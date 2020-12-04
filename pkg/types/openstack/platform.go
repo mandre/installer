@@ -63,6 +63,10 @@ type Platform struct {
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
 	// ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage.
+	// Valid properties are:
+	// 	- hw_qemu_guest_agent: yes/no
+	// 	- hw_disk_bus: scsi/virtio
+	// 	- hw_scsi_model: virtio-scsi
 	// Default: the default is to not set any properties.
 	// +optional
 	ClusterOSImageProperties map[string]string `json:"clusterOSImageProperties,omitempty"`

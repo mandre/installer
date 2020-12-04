@@ -1100,7 +1100,7 @@ spec:
                   clusterOSImageProperties:
                     additionalProperties:
                       type: string
-                    description: 'ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage. Default: the default is to not set any properties.'
+                    description: "ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage. Valid properties are: \t- hw_qemu_guest_agent: yes/no \t- hw_disk_bus: scsi/virtio \t- hw_scsi_model: virtio-scsi Default: the default is to not set any properties."
                     type: object
                   computeFlavor:
                     description: FlavorName is the name of the compute flavor to use for instances in this cluster.

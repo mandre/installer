@@ -15,35 +15,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// validateBaseImageProperties warns user if the image properties being used are not supported
-func validateImageProperties(imageProperties map[string]string) {
-	validProperties := map[string][]string{
-		"hw_qemu_guest_agent": {"yes", "no", "true", "false"},
-		"hw_scsi_model":       {"virtio-scsci"},
-		"hw_disk_bus":         {"scsi", "virtio"},
-	}
-
-	for property, value := range imageProperties {
-		found := false
-		if validValues, ok := validProperties[property]; ok {
-			for _, allowedValue := range validValues {
-				if value == allowedValue {
-					found = true
-					break
-				}
-			}
-		}
-		if !found {
-			logrus.Warningln("'"+property+"="+value+"'", "is not a supported image property")
-		}
-	}
-}
-
 // uploadBaseImage creates a new image in Glance and uploads the RHCOS image there
 func uploadBaseImage(cloud string, localFilePath string, imageName string, clusterID string, imageProperties map[string]string) error {
 	logrus.Debugln("Creating a Glance image for RHCOS...")
-
-	validateImageProperties(imageProperties)
 
 	f, err := os.Open(localFilePath)
 	if err != nil {
